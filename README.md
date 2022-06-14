@@ -1,5 +1,6 @@
 # Equivariant Charged Particle Tracking
 [![GitHub Project](https://img.shields.io/badge/GitHub--blue?style=social&logo=GitHub)](https://github.com/ameya1101/equivariant-tracking)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 This repository contains the code written for the IRIS-HEP Fellowship project: **[Equivariant Graph Neural Networks for Particle Tracking](https://iris-hep.org/fellows/ameya1101.html)**.
 
