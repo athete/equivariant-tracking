@@ -302,8 +302,8 @@ def select_hits(hits, truth, particles, pt_min=0, endcaps=False):
         .assign(r=r, phi=phi)
         .merge(truth[["hit_id", "particle_id", "pt", "eta"]], on="hit_id")
     )
-    # Remove duplicate hits
-    hits = hits.loc[hits.groupby(["particle_id", "layer"], as_index=False).r.idxmin()]
+    # Remove duplicate hits (Skipped as per DeZoort's suggestion)
+    # hits = hits.loc[hits.groupby(["particle_id", "layer"], as_index=False).r.idxmin()]
 
     return hits
 

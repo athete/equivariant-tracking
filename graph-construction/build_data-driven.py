@@ -34,7 +34,7 @@ def parse_args():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser("prepare.py")
     add_arg = parser.add_argument
-    add_arg("config", nargs="?", default="configs/prepare_trackml.yaml")
+    add_arg("config", nargs="?", default="graph-construction/configs/data-driven.yaml")
     add_arg("--n-workers", type=int, default=1)
     add_arg("--task", type=int, default=0)
     add_arg("--n-tasks", type=int, default=1)
@@ -312,8 +312,8 @@ def select_hits(hits, truth, particles, pt_min=0, endcaps=False):
         .assign(r=r, phi=phi)
         .merge(truth[["hit_id", "particle_id", "pt"]], on="hit_id")
     )
-    # Remove duplicate hits
-    hits = hits.loc[hits.groupby(["particle_id", "layer"], as_index=False).r.idxmin()]
+    # Remove duplicate hits (Skipped as per DeZoort's suggestion)
+    # hits = hits.loc[hits.groupby(["particle_id", "layer"], as_index=False).r.idxmin()]
 
     return hits
 
@@ -477,9 +477,9 @@ def main():
         2.0: "2",
     }
     pt_str = pt_map[config["selection"]["pt_min"]]
-    indir_sample_str = [f for f in config["input_dir"].split("/") if "train" in f]
-    indir_sample_str = indir_sample_str[0].split("_")[1]
-    map_sample_str = "1" if indir_sample_str == "2" else "2"
+    #indir_sample_str = [f for f in config["input_dir"].split("/") if "train" in f]
+    #indir_sample_str = indir_sample_str[0].split("_")[1]
+    map_sample_str = "000001000" #"1" if indir_sample_str == "2" else "2"
     print(
         " *** using module maps from",
         f"module_maps/module_map_{map_sample_str}_{pt_str}GeV.npy",

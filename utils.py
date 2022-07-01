@@ -1,9 +1,13 @@
+from typing import List
 import torch
+from torch import Tensor
 
-__all__ = ["unsorted_segment_sum", "minkowski_feats"]
+__all__ = ["unsorted_segment_sum", "euclidean_feats"]
 
 
-def unsorted_segment_sum(data, segment_ids, num_segments):
+def unsorted_segment_sum(
+    data: Tensor, segment_ids: Tensor, num_segments: int
+) -> Tensor:
     r"""Custom PyTorch op to replicate TensorFlow's `unsorted_segment_sum`.
     Adapted from https://github.com/vgsatorras/egnn.
     """
@@ -12,32 +16,32 @@ def unsorted_segment_sum(data, segment_ids, num_segments):
     return result
 
 
-def minkowski_feats(edges, x):
-    i, j = edges
+def euclidean_feats(edge_index: Tensor, x: Tensor) -> List[Tensor]:
+    i, j = edge_index
     x_diff = x[i] - x[j]
-    norms = normsq4(x_diff).unsqueeze(1)
-    dots = dotsq4(x[i], x[j]).unsqueeze(1)
+    norms = norm(x_diff).unsqueeze(1)
+    dots = dot(x[i], x[j]).unsqueeze(1)
     norms, dots = psi(norms), psi(dots)
     return norms, dots, x_diff
 
 
-def normsq4(p):
-    r""" Minkowski square norm
-         `\|p\|^2 = p[0]^2-p[1]^2-p[2]^2-p[3]^2`
+def norm(x: Tensor) -> Tensor:
+    r""" Euclidean square norm
+         `\|x\|^2 = x[0]^2+x[1]^2+x[2]^2`
     """
-    psq = torch.pow(p, 2)
-    return 2 * psq[..., 0] - psq.sum(dim=-1)
+    x_sq = torch.pow(x, 2)
+    return x_sq.sum(dim=-1)
 
 
-def dotsq4(p, q):
-    r""" Minkowski inner product
-         `<p,q> = p[0]q[0]-p[1]q[1]-p[2]q[2]-p[3]q[3]`
+def dot(x: Tensor, y: Tensor) -> Tensor:
+    r""" Euclidean inner product
+         `<x,y> = x[0]y[0]+x[1]y[1]+x[2]y[2]`
     """
-    psq = p * q
-    return 2 * psq[..., 0] - psq.sum(dim=-1)
+    xy = x * y
+    return xy.sum(dim=-1)
 
 
-def psi(p):
-    """ `\psi(p) = Sgn(p) \cdot \log(|p| + 1)`
+def psi(x: Tensor) -> Tensor:
+    """ `\psi(x) = sgn(x) \cdot \log(|x| + 1)`
     """
-    return torch.sign(p) * torch.log(torch.abs(p) + 1)
+    return torch.sign(x) * torch.log(torch.abs(x) + 1)
