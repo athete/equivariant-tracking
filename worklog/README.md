@@ -21,3 +21,8 @@ A log of the tasks completed over the week, updated weekly.
     * Ran a test "Hello, World!" job
 
 ## Week 3 (20 Jun - 26 Jun)
+- Adapted the LorentzNet architecture to a tracking task (used the Euclidean group instead)
+- Generated hitgraphs using the geometric and pre-clustering methods
+- Wrote training scripts (need to perform a sanity check though)
+
+## Week 4 (27 Jun - 3 Jul)
