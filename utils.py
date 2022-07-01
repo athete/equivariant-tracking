@@ -1,9 +1,7 @@
 import torch
 
-__all__ =[
-    'unsorted_segment_sum',
-    'minkowski_feats'
-]
+__all__ = ["unsorted_segment_sum", "minkowski_feats"]
+
 
 def unsorted_segment_sum(data, segment_ids, num_segments):
     r"""Custom PyTorch op to replicate TensorFlow's `unsorted_segment_sum`.
@@ -14,7 +12,7 @@ def unsorted_segment_sum(data, segment_ids, num_segments):
     return result
 
 
-def minkowski_feats(self, edges, x):
+def minkowski_feats(edges, x):
     i, j = edges
     x_diff = x[i] - x[j]
     norms = normsq4(x_diff).unsqueeze(1)
