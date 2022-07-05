@@ -1,7 +1,7 @@
 # Input/output configuration
-input_dir: 
-output_dir: 
-n_files: 1770
+input_dir: /global/cscratch1/a/ameyat/train_raw 
+output_dir: /global/cscrath1/a/ameyat/hitgraphs/geometric/1p5/
+n_files: 1500
 
 # Graph building configuration
 selection:

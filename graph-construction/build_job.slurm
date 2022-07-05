@@ -8,8 +8,7 @@
 #SBATCH --time=3:00:00           # total run time limit (HH:MM:SS)
 
 module purge
-module load anaconda3
-conda activate geo_gnnenv
+module load pytorch/v1.2.0
 
 echo "...building geometric"
-python build_geometric.py configs/geometric.yaml --start-evtid=1000 --end-evtid=2000
+python build_geometric.py configs/geometric.yaml --start-evtid=1000 --end-evtid=1500
