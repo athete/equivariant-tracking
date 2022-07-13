@@ -2,8 +2,6 @@ import os
 import torch
 import numpy as np
 from torch_geometric.data import Data, Dataset
-from torch_geometric.utils import to_undirected
-from torch_geometric.transforms import ToUndirected
 
 class GraphDataset(Dataset):
     def __init__(self, transform=None, pre_transform=None,
@@ -43,5 +41,5 @@ class GraphDataset(Dataset):
                         edge_attr=torch.transpose(edge_attr, 0, 1),
                         y=y, pid=pid, pt=pt, eta=eta)
             data.num_nodes = len(x)
-
+            print(data)
         return data  

@@ -15,7 +15,7 @@ from models.dataset import GraphDataset
 
 def train(args, model, device, train_loader, optimizer, epoch):
     model.train()
-    epoch_t0 = time()
+    epoch_t0 = time.time()
     losses = []
     for batch_idx, data in enumerate(train_loader):
         data = data.to(device)
@@ -29,10 +29,10 @@ def train(args, model, device, train_loader, optimizer, epoch):
             print(
                 f"Train Epoch: {epoch} [{batch_idx}/{len(train_loader.dataset)} ({100. * batch_idx / len(train_loader):.6f})]\tLoss: {loss.item():.6f}"
             )
-            if args.dry_run:
-                break
+        if args.dry_run:
+            break
         losses.append(loss.item())
-    print(f"...epoch time: {time() - epoch_t0}s")
+    print(f"...epoch time: {time.time() - epoch_t0}s")
     print(f"...epoch {epoch}: train loss = {np.mean(losses)}")
     return np.mean(losses)
 
@@ -230,11 +230,12 @@ def main():
         n_input=train_set.get(0).x.size()[1],
         n_hidden=args.hidden_size,
         n_layers=args.num_layers,
-        n_output=train_set.get(0).y.size()[0],
+        n_output=1,
         c_weight=args.c_weight,
     )
     total_trainable_params = sum(p.numel() for p in model.parameters())
     print(f"Total trainable parameters: {total_trainable_params}")
+    model.to(device)
 
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
     scheduler = StepLR(optimizer, step_size=args.step_size, gamma=args.gamma)
