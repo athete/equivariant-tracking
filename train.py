@@ -198,8 +198,8 @@ def main():
         test_kwargs.update(cuda_kwargs)
 
     home_dir = ""
-    indir = ""
-
+    indir = f"hitgraphs/{args.construction}/{args.pt.replace('.', 'p')}/"
+ 
     graph_files = np.array(os.listdir(indir))
     graph_files = np.array(
         [os.path.join(indir, graph_file) for graph_file in graph_files]
