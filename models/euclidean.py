@@ -62,11 +62,15 @@ class EuclidNet(nn.Module):
         n_layers: int,
         n_output: int,
         c_weight: float = 1e-3,
+        group=None
     ) -> None:
         super(EuclidNet, self).__init__()
         self.n_hidden = n_hidden
         self.n_layers = n_layers
         self.n_output = n_output
+
+        # Model's equivariance group
+        self.group = group
 
         self.EBs = nn.ModuleList(
             [

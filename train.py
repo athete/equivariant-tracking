@@ -10,7 +10,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from torch import optim
-from torch.optim.lr_scheduler import StepLR, CosineAnnealingWarmRestarts
+from torch.optim.lr_scheduler import StepLR
 from torch_geometric.loader import DataLoader
 
 from models.euclidean import EuclidNet
@@ -237,11 +237,14 @@ def main():
         n_layers=args.num_layers,
         n_output=1,
         c_weight=args.c_weight,
+        group="SO(3)"
     ).to(device)
     total_trainable_params = sum(p.numel() for p in model.parameters())
     print(f"Total trainable parameters: {total_trainable_params}")
-    optimizer = optim.AdamW(model.parameters(), lr=args.lr)
-    scheduler = CosineAnnealingWarmRestarts(optimizer, 4, 2, verbose=False)
+    optimizer = optim.Adam(model.parameters(), lr=args.lr)
+    scheduler = StepLR(optimizer, step_size=args.step_size, gamma=args.gamma)
+
+    print(f"Equivariance Group: {model.group}")
 
     output = {"train_loss": [], "test_loss": [], "test_acc": [], "val_loss": []}
     for epoch in range(1, args.epochs + 1):
