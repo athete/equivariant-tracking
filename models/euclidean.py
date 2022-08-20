@@ -47,7 +47,6 @@ class EB(nn.Module):
         x = x + x_agg * self.c_weight
         return x
 
-
     def forward(self, x, edge_index):
         norms, dots, x_diff = euclidean_feats(edge_index, x)
         m = self.message(norms, dots)

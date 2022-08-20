@@ -11,7 +11,8 @@ from sklearn.cluster import DBSCAN
 from torch_geometric.data import DataLoader
 
 from models.euclidean_eq import EuclidNet
-#from models.interaction import InteractionNetwork
+
+# from models.interaction import InteractionNetwork
 from models.dataset import GraphDataset
 
 
@@ -50,16 +51,19 @@ model = models_by_pt[pt_min]
 print("...evaluating ", model)
 thld = thlds[pt_min]
 euclid_net = EuclidNet(n_input=3, n_hidden=40, n_layers=1, n_output=1, c_weight=1e-3)
-#in_model = InteractionNetwork(40).to(device)
-#in_model.load_state_dict(
+# in_model = InteractionNetwork(40).to(device)
+# in_model.load_state_dict(
 #    torch.load(os.path.join(model_dir, model), map_location=torch.device(device))
-#)
+# )
 euclid_net.to(device)
 euclid_net.eval()
 
 construction = "geometric"
 graph_indir = f"hitgraphs/{construction}/{pt_min.replace('.', 'p')}"
-print("...sampling graphs from ", os.path.join(graph_indir, construction, pt_min.replace('.', 'p')))
+print(
+    "...sampling graphs from ",
+    os.path.join(graph_indir, construction, pt_min.replace(".", "p")),
+)
 graph_files = np.array(os.listdir(graph_indir))
 graph_files = np.array([os.path.join(graph_indir, f) for f in graph_files])
 n_graphs = len(graph_files)
@@ -71,25 +75,7 @@ test_set = GraphDataset(graph_files=graph_files[IDs[1000:1400]])
 test_loader = DataLoader(test_set, **params)
 
 pt_bins = np.array(
-    [
-        0.6,
-        0.8,
-        1,
-        1.2,
-        1.5,
-        1.8,
-        2.1,
-        2.5,
-        3,
-        3,
-        3.5,
-        4,
-        5,
-        6,
-        8,
-        10,
-        15
-    ]
+    [0.6, 0.8, 1, 1.2, 1.5, 1.8, 2.1, 2.5, 3, 3, 3.5, 4, 5, 6, 8, 10, 15]
 )
 pt_bin_centers = (pt_bins[1:] + pt_bins[:-1]) / 2
 effs_by_pt = {"perfect": [], "dm": [], "lhc": []}
@@ -176,7 +162,7 @@ with torch.no_grad():
         )
         eta_i = calc_eta(r_i, z_i)
         dphi, deta = calc_dphi(phi_o, phi_i), eta_i - eta_o
-        distances = torch.sqrt(dphi ** 2 + deta ** 2)
+        distances = torch.sqrt(dphi**2 + deta**2)
         dist_matrix = 100 * torch.ones(X.shape[0], X.shape[0])
         for i in range(dist_matrix.shape[0]):
             dist_matrix[i][i] = 0
@@ -187,7 +173,7 @@ with torch.no_grad():
         eps_dict = {
             "2.0": 0.4,
             "1.5": 0.4,
-	    "1.3": 0.4,
+            "1.3": 0.4,
             "1.0": 0.4,
             "0.9": 0.4,
             "0.8": 0.4,

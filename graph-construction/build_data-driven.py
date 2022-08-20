@@ -93,7 +93,7 @@ def select_segments(
     eta_1 = calc_eta(hit_pairs.r_1, hit_pairs.z_1)
     eta_2 = calc_eta(hit_pairs.r_2, hit_pairs.z_2)
     deta = eta_2 - eta_1
-    dR = np.sqrt(deta ** 2 + dphi ** 2)
+    dR = np.sqrt(deta**2 + dphi**2)
     phi_slope = dphi / dr
     z0 = hit_pairs.z_1 - hit_pairs.r_1 * dz / dr
     # print("max(z0) = ", np.max(abs(z0)))
@@ -295,7 +295,7 @@ def select_hits(hits, truth, particles, pt_min=0, endcaps=False):
         [vlid_groups.get_group(vlids[i]).assign(layer=i) for i in range(n_det_layers)]
     )
     # Calculate particle transverse momentum
-    pt = np.sqrt(particles.px ** 2 + particles.py ** 2)
+    pt = np.sqrt(particles.px**2 + particles.py**2)
     particles["pt"] = pt
     # True particle selection.
     # Applies pt cut, removes all noise hits.
@@ -304,7 +304,7 @@ def select_hits(hits, truth, particles, pt_min=0, endcaps=False):
         particles[["particle_id", "pt"]], on="particle_id"
     )
     # Calculate derived hits variables
-    r = np.sqrt(hits.x ** 2 + hits.y ** 2)
+    r = np.sqrt(hits.x**2 + hits.y**2)
     phi = np.arctan2(hits.y, hits.x)
     # Select the data columns we need
     hits = (
@@ -477,9 +477,9 @@ def main():
         2.0: "2",
     }
     pt_str = pt_map[config["selection"]["pt_min"]]
-    #indir_sample_str = [f for f in config["input_dir"].split("/") if "train" in f]
-    #indir_sample_str = indir_sample_str[0].split("_")[1]
-    map_sample_str = "000001000" #"1" if indir_sample_str == "2" else "2"
+    # indir_sample_str = [f for f in config["input_dir"].split("/") if "train" in f]
+    # indir_sample_str = indir_sample_str[0].split("_")[1]
+    map_sample_str = "000001000"  # "1" if indir_sample_str == "2" else "2"
     print(
         " *** using module maps from",
         f"module_maps/module_map_{map_sample_str}_{pt_str}GeV.npy",

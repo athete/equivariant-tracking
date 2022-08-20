@@ -86,7 +86,7 @@ def select_segments(
     eta_1 = calc_eta(hit_pairs.r_1, hit_pairs.z_1)
     eta_2 = calc_eta(hit_pairs.r_2, hit_pairs.z_2)
     deta = eta_2 - eta_1
-    dR = np.sqrt(deta ** 2 + dphi ** 2)
+    dR = np.sqrt(deta**2 + dphi**2)
     phi_slope = dphi / dr
     z0 = hit_pairs.z_1 - hit_pairs.r_1 * dz / dr
 
@@ -282,7 +282,7 @@ def select_hits(hits, truth, particles, pt_min=0, endcaps=False):
         [vlid_groups.get_group(vlids[i]).assign(layer=i) for i in range(n_det_layers)]
     )
     # Calculate particle transverse momentum
-    pt = np.sqrt(particles.px ** 2 + particles.py ** 2)
+    pt = np.sqrt(particles.px**2 + particles.py**2)
     particles["pt"] = pt
     eta = calc_eta(pt, particles.pz)
     particles["eta"] = eta
@@ -294,7 +294,7 @@ def select_hits(hits, truth, particles, pt_min=0, endcaps=False):
         particles[["particle_id", "pt", "eta"]], on="particle_id"
     )
     # Calculate derived hits variables
-    r = np.sqrt(hits.x ** 2 + hits.y ** 2)
+    r = np.sqrt(hits.x**2 + hits.y**2)
     phi = np.arctan2(hits.y, hits.x)
     # Select the data columns we need
     hits = (

@@ -31,7 +31,7 @@ def train(args, model, device, train_loader, optimizer, epoch):
         optimizer.step()
         if batch_idx % args.log_interval == 0:
             print(
-		f"Train Epoch: {epoch} [{batch_idx}/{len(train_loader.dataset)} ({100. * batch_idx / len(train_loader):.6f})]\tLoss: {loss.item():.6f}"
+                f"Train Epoch: {epoch} [{batch_idx}/{len(train_loader.dataset)} ({100. * batch_idx / len(train_loader):.6f})]\tLoss: {loss.item():.6f}"
             )
         if args.dry_run == True:
             quit()
@@ -213,7 +213,7 @@ def main():
     n_graphs = len(graph_files)
 
     IDs = np.arange(n_graphs)
-    #np.random.shuffle(IDs)
+    # np.random.shuffle(IDs)
     partition = {
         "train": graph_files[IDs[:1000]],
         "test": graph_files[IDs[1000:1400]],
@@ -241,7 +241,7 @@ def main():
     total_trainable_params = sum(p.numel() for p in model.parameters())
     print(f"Total trainable parameters: {total_trainable_params}")
     optimizer = optim.AdamW(model.parameters(), lr=args.lr)
-    scheduler = CosineAnnealingWarmRestarts(optimizer, 4, 2, verbose = False)
+    scheduler = CosineAnnealingWarmRestarts(optimizer, 4, 2, verbose=False)
 
     output = {"train_loss": [], "test_loss": [], "test_acc": [], "val_loss": []}
     for epoch in range(1, args.epochs + 1):
@@ -259,10 +259,11 @@ def main():
 
     np.save(f"train_output/EN_{args.construction}_L1_{args.pt}GeV", output)
     if args.save_model:
-    	torch.save(
-		model.state_dict(),
-                f"trained_models/EN_{args.construction}_L1_epoch{args.epochs}_{args.pt}GeV.pt",
-    	)
+        torch.save(
+            model.state_dict(),
+            f"trained_models/EN_{args.construction}_L1_epoch{args.epochs}_{args.pt}GeV.pt",
+        )
 
-if __name__ == '__main__':
-	main()
+
+if __name__ == "__main__":
+    main()
