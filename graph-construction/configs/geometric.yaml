@@ -1,13 +1,13 @@
 # Input/output configuration
-input_dir: /global/cscratch1/a/ameyat/train_raw 
-output_dir: /global/cscrath1/a/ameyat/hitgraphs/geometric/1p5/
+input_dir: /global/cfs/cdirs/m3443/usr/ameyat/train_raw
+output_dir: /global/cfs/cdirs/m3443/usr/ameyat/hitgraphs/geometric/0p8/
 n_files: 1500
 
 # Graph building configuration
 selection:
-    pt_min: 1.5 # GeV
-    phi_slope_max: 0.006
-    z0_max: 275
+    pt_min: 0.8 # GeV
+    phi_slope_max: 0.0080
+    z0_max: 425
     n_phi_sections: 1
     n_eta_sections: 1
     eta_range: [-5, 5]

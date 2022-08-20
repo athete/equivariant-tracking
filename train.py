@@ -1,12 +1,16 @@
 import os
 import argparse
-import time
+from time import time
+from statistics import mean
+import warnings
+
+warnings.filterwarnings("ignore")
 
 import numpy as np
 import torch
 import torch.nn.functional as F
 from torch import optim
-from torch.optim.lr_scheduler import StepLR
+from torch.optim.lr_scheduler import StepLR, CosineAnnealingWarmRestarts
 from torch_geometric.loader import DataLoader
 
 from models.euclidean import EuclidNet
@@ -20,21 +24,21 @@ def train(args, model, device, train_loader, optimizer, epoch):
     for batch_idx, data in enumerate(train_loader):
         data = data.to(device)
         optimizer.zero_grad()
-        out = model(data.x, data.edge_index, data.edge_attr)
+        out = model(data.x, data.edge_index)
         y, out = data.y, out.squeeze(1)
         loss = F.binary_cross_entropy(out, y, reduction="mean")
         loss.backward()
         optimizer.step()
         if batch_idx % args.log_interval == 0:
             print(
-                f"Train Epoch: {epoch} [{batch_idx}/{len(train_loader.dataset)} ({100. * batch_idx / len(train_loader):.6f})]\tLoss: {loss.item():.6f}"
+		f"Train Epoch: {epoch} [{batch_idx}/{len(train_loader.dataset)} ({100. * batch_idx / len(train_loader):.6f})]\tLoss: {loss.item():.6f}"
             )
-            if args.dry_run:
-                break
+        if args.dry_run == True:
+            quit()
         losses.append(loss.item())
     print(f"...epoch time: {time() - epoch_t0}s")
-    print(f"...epoch {epoch}: train loss = {np.mean(losses)}")
-    return np.mean(losses)
+    print(f"...epoch {epoch}: train loss = {mean(losses)}")
+    return mean(losses)
 
 
 def validate(model, device, val_loader):
@@ -42,7 +46,7 @@ def validate(model, device, val_loader):
     opt_thlds, losses, accs = [], [], []
     for data in val_loader:
         data = data.to(device)
-        out = model(data.x, data.edge_index, data.edge_attr)
+        out = model(data.x, data.edge_index)
         y, out = data.y, out.squeeze(1)
         loss = F.binary_cross_entropy(out, y, reduction="mean")
 
@@ -74,7 +78,7 @@ def test(model, device, test_loader, thld=0.5):
     with torch.no_grad():
         for data in test_loader:
             data = data.to(device)
-            out = model(data.x, data.edge_index, data.edge_attr)
+            out = model(data.x, data.edge_index)
             TP = torch.sum((data.y == 1).squeeze() & (out > thld).squeeze()).item()
             TN = torch.sum((data.y == 0).squeeze() & (out < thld).squeeze()).item()
             FP = torch.sum((data.y == 0).squeeze() & (out > thld).squeeze()).item()
@@ -90,6 +94,7 @@ def test(model, device, test_loader, thld=0.5):
 
 
 def main():
+    print("In main")
     # Training argument
     parser = argparse.ArgumentParser(
         description="Euclidean Equivariant Network Implementation"
@@ -111,7 +116,7 @@ def main():
     parser.add_argument(
         "--epochs",
         type=int,
-        default=14,
+        default=50,
         metavar="N",
         help="number of epochs to train (default: 14)",
     )
@@ -164,7 +169,7 @@ def main():
         "--save-model",
         action="store_true",
         default=False,
-        help="For saving the current Model",
+        help="For saving the current model",
     )
     parser.add_argument(
         "--hidden-size", type=int, default=40, help="Number of hidden units per layer"
@@ -172,8 +177,8 @@ def main():
     parser.add_argument(
         "--num-layers",
         type=int,
-        default=5,
-        help="Number of repetitions of the equivariant block (default: 5)",
+        default=1,
+        help="Number of repetitions of the equivariant block (default: 1)",
     )
     parser.add_argument(
         "--c-weight",
@@ -185,11 +190,10 @@ def main():
     args = parser.parse_args()
     use_cuda = not args.no_cuda and torch.cuda.is_available()
     print(f"use_cuda={use_cuda}")
-
     torch.manual_seed(args.seed)
 
     device = torch.device("cuda" if use_cuda else "cpu")
-
+    print(f"Using {device}")
     train_kwargs = {"batch_size": args.batch_size}
     test_kwargs = {"batch_size": args.test_batch_size}
     if use_cuda:
@@ -198,7 +202,8 @@ def main():
         test_kwargs.update(cuda_kwargs)
 
     home_dir = ""
-    indir = ""
+    indir = f"hitgraphs/{args.construction}/{args.pt.replace('.', 'p')}/"
+    print(indir)
 
     graph_files = np.array(os.listdir(indir))
     graph_files = np.array(
@@ -208,7 +213,7 @@ def main():
     n_graphs = len(graph_files)
 
     IDs = np.arange(n_graphs)
-    np.random.shuffle(IDs)
+    #np.random.shuffle(IDs)
     partition = {
         "train": graph_files[IDs[:1000]],
         "test": graph_files[IDs[1000:1400]],
@@ -230,14 +235,13 @@ def main():
         n_input=train_set.get(0).x.size()[1],
         n_hidden=args.hidden_size,
         n_layers=args.num_layers,
-        n_output=train_set.get(0).y.size()[0],
+        n_output=1,
         c_weight=args.c_weight,
-    )
+    ).to(device)
     total_trainable_params = sum(p.numel() for p in model.parameters())
     print(f"Total trainable parameters: {total_trainable_params}")
-
-    optimizer = optim.Adam(model.parameters(), lr=args.lr)
-    scheduler = StepLR(optimizer, step_size=args.step_size, gamma=args.gamma)
+    optimizer = optim.AdamW(model.parameters(), lr=args.lr)
+    scheduler = CosineAnnealingWarmRestarts(optimizer, 4, 2, verbose = False)
 
     output = {"train_loss": [], "test_loss": [], "test_acc": [], "val_loss": []}
     for epoch in range(1, args.epochs + 1):
@@ -248,15 +252,17 @@ def main():
         test_loss, test_acc = test(model, device, test_loader, thld=thld)
         scheduler.step()
 
-        if args.save_model:
-            torch.save(
-                model.state_dict(),
-                f"trained_models/EN_{args.construction}_epoch{epoch}_{args.pt}GeV.pt",
-            )
-
         output["train_loss"].append(train_loss)
         output["test_loss"].append(test_loss)
         output["test_acc"].append(test_acc)
         output["val_loss"].append(val_loss)
 
-    np.save(f"train_output/EN_{args.construction}_{args.pt}GeV", output)
+    np.save(f"train_output/EN_{args.construction}_L1_{args.pt}GeV", output)
+    if args.save_model:
+    	torch.save(
+		model.state_dict(),
+                f"trained_models/EN_{args.construction}_L1_epoch{args.epochs}_{args.pt}GeV.pt",
+    	)
+
+if __name__ == '__main__':
+	main()

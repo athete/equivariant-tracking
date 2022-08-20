@@ -1,6 +1,6 @@
 # Input/output configuration
-input_dir: 
-output_dir: 
+input_dir: /global/cfs/cdirs/m3443/usr/ameyat/train_raw
+output_dir: /global/cfs/cdirs/m3443/usr/ameyat/hitgraphs/pre-clustering/1p5/ 
 n_files: 1770
 
 # Graph building configuration

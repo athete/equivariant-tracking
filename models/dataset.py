@@ -25,6 +25,9 @@ class GraphDataset(Dataset):
     def get(self, idx):
         with np.load(self.graph_files[idx]) as f:
             x = torch.from_numpy(f['x'])
+            x_c = x.clone()
+            x_c[:, 0] = x[:, 0]*torch.cos(x[:, 1])
+            x_c[:, 1] = x[:, 0]*torch.sin(x[:, 1])
             edge_attr = torch.from_numpy(f['edge_attr'])
             edge_index = torch.from_numpy(f['edge_index'])
             y = torch.from_numpy(f['y'])
@@ -39,7 +42,7 @@ class GraphDataset(Dataset):
             edge_attr = torch.cat([edge_attr, -1*edge_attr], dim=1)
             y = torch.cat([y,y])
 
-            data = Data(x=x, edge_index=edge_index,
+            data = Data(x=x_c, edge_index=edge_index,
                         edge_attr=torch.transpose(edge_attr, 0, 1),
                         y=y, pid=pid, pt=pt, eta=eta)
             data.num_nodes = len(x)

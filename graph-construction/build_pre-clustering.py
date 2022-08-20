@@ -48,7 +48,6 @@ def parse_args():
 
 
 # Build custom distance matrix
-@jit(nopython=True)
 def build_dist_matrix(X):
     """ speedy custom distance matrix calculation
     """
@@ -356,7 +355,7 @@ def select_hits(hits, truth, particles, pt_min=0, endcaps=False):
         .merge(truth[["hit_id", "particle_id", "pt"]], on="hit_id")
     )
     # Remove duplicate hits
-    hits = hits.loc[hits.groupby(["particle_id", "layer"], as_index=False).r.idxmin()]
+    #  hits = hits.loc[hits.groupby(["particle_id", "layer"], as_index=False).r.idxmin()]
 
     return hits
 

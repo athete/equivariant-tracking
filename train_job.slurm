@@ -1,15 +1,17 @@
 #!/bin/bash
 #SBATCH --job-name=EN-train    # create a short name for your job
+#SBATCH -A m3443_g
+#SBATCH -C gpu
+#SBATCH -q regular
 #SBATCH --nodes=1                # node count
 #SBATCH --ntasks=1               # total number of tasks across all nodes
-#SBATCH --cpus-per-task=6        # cpu-cores per task (>1 if multi-threaded tasks)
-#SBATCH --mem=32G                 # total memory per node (4 GB per cpu-core is default)
 #SBATCH --gres=gpu:1             # number of gpus per node
-#SBATCH --time=10:00:00          # total run time limit (HH:MM:SS)
+#SBATCH --time=02:30:00          # total run time limit (HH:MM:SS)
+#SBATCH --mail-type=BEGIN,END
+#SBATCH --mail-user=ameyathete11@gmail.com
 
-module purge
-module load anaconda3
-conda activate torch-env
+module load python
+source activate pytorch-gnn
 
-echo "python train.py --epochs=120 --lr=0.005 --gamma=0.9 --pt=1 --step-size=10 --construction=pre-clustering --save-model=True"
-python train.py --epochs=120 --lr=0.005 --gamma=0.9 --pt=1 --step-size=10 --construction=pre-clustering --save-model=True
+echo "python equivariant-tracking/train.py --pt=$1 --construction='geometric' --epochs=100 --lr=1e-3 --save-model"
+python equivariant-tracking/train.py --pt=$1 --construction='geometric' --epochs=100 --lr=1e-3 --save-model
