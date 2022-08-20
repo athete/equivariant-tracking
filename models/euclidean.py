@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch_geometric.nn import MessagePassing
 from torch.nn import Sequential, Linear
 
-from utils import euclidean_feats, unsorted_segment_sum
+from utils import euclidean_feats, unsorted_segment_mean
 
 
 class EB(nn.Module):
@@ -43,7 +43,7 @@ class EB(nn.Module):
         update_val = x_diff * self.phi_x(m)
         # LorentzNet authors clamp the update tensor as a precautionary measure
         update_val = torch.clamp(update_val, min=-100, max=100)
-        x_agg = unsorted_segment_sum(update_val, i, num_segments=x.size(0))
+        x_agg = unsorted_segment_mean(update_val, i, num_segments=x.size(0))
         x = x + x_agg * self.c_weight
         return x
 

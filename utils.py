@@ -2,7 +2,7 @@ from typing import List
 import torch
 from torch import Tensor
 
-__all__ = ["unsorted_segment_sum", "euclidean_feats"]
+__all__ = ["unsorted_segment_sum", "unsorted_segment_mean", "euclidean_feats"]
 
 
 def unsorted_segment_sum(
@@ -15,6 +15,17 @@ def unsorted_segment_sum(
     result.index_add_(0, segment_ids, data)
     return result
 
+def unsorted_segment_mean(
+    data: Tensor, segment_ids: Tensor, num_segments: int
+) -> Tensor:
+    r'''Custom PyTorch op to replicate TensorFlow's `unsorted_segment_mean`.
+    Adapted from https://github.com/vgsatorras/egnn.
+    '''
+    result = data.new_zeros((num_segments, data.size(1)))
+    count = data.new_zeros((num_segments, data.size(1)))
+    result.index_add_(0, segment_ids, data)
+    count.index_add_(0, segment_ids, torch.ones_like(data))
+    return result / count.clamp(min=1)
 
 def euclidean_feats(edge_index: Tensor, x: Tensor) -> List[Tensor]:
     i, j = edge_index
