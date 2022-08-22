@@ -6,12 +6,13 @@
 #SBATCH --nodes=1                # node count
 #SBATCH --ntasks=1               # total number of tasks across all nodes
 #SBATCH --gres=gpu:1             # number of gpus per node
-#SBATCH --time=02:30:00          # total run time limit (HH:MM:SS)
+#SBATCH --time=03:30:00          # total run time limit (HH:MM:SS)
 #SBATCH --mail-type=BEGIN,END
 #SBATCH --mail-user=ameyathete11@gmail.com
+#SBATCH --output=logs/%x-geometric-1p5-so3-e150.log
 
 module load python
 source activate pytorch-gnn
 
-echo "python equivariant-tracking/train.py --pt=$1 --construction='geometric' --epochs=100 --lr=1e-3 --save-model"
-python equivariant-tracking/train.py --pt=$1 --construction='geometric' --epochs=100 --lr=1e-3 --save-model
+echo "python equivariant-tracking/train.py --pt=1.5 --construction='geometric' --epochs=150 --save-model"
+python equivariant-tracking/train.py --pt=1.5 --construction='geometric' --epochs=150 --save-model

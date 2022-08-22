@@ -48,7 +48,7 @@ def validate(model, device, val_loader):
         data = data.to(device)
         out = model(data.x, data.edge_index)
         y, out = data.y, out.squeeze(1)
-        loss = F.binary_cross_entropy(out, y, reduction="mean")
+        loss = F.binary_cross_entropy(out, y, reduction="mean").item()
 
         # define optimal threshold where TPR = TNR
         diff, opt_thld, opt_acc = 100, 0, 0
@@ -95,7 +95,7 @@ def test(model, device, test_loader, thld=0.5):
 
 def main():
     print("In main")
-    # Training argument
+    # Training arguments
     parser = argparse.ArgumentParser(
         description="Euclidean Equivariant Network Implementation"
     )
@@ -116,16 +116,16 @@ def main():
     parser.add_argument(
         "--epochs",
         type=int,
-        default=50,
+        default=150,
         metavar="N",
-        help="number of epochs to train (default: 14)",
+        help="number of epochs to train (default: 150)",
     )
     parser.add_argument(
         "--lr",
         type=float,
-        default=1.0,
+        default=1e-3,
         metavar="LR",
-        help="learning rate (default: 1.0)",
+        help="learning rate (default: 1e-3)",
     )
     parser.add_argument(
         "--gamma",
@@ -172,7 +172,7 @@ def main():
         help="For saving the current model",
     )
     parser.add_argument(
-        "--hidden-size", type=int, default=40, help="Number of hidden units per layer"
+        "--hidden-size", type=int, default=72, help="Number of hidden units per layer"
     )
     parser.add_argument(
         "--num-layers",
@@ -183,8 +183,8 @@ def main():
     parser.add_argument(
         "--c-weight",
         type=float,
-        default=1e-3,
-        help="Weight hyperparameter for updates (default: 1e-3)",
+        default=1,
+        help="Weight hyperparameter for updates (default: 1)",
     )
 
     args = parser.parse_args()
@@ -213,7 +213,6 @@ def main():
     n_graphs = len(graph_files)
 
     IDs = np.arange(n_graphs)
-    # np.random.shuffle(IDs)
     partition = {
         "train": graph_files[IDs[:1000]],
         "test": graph_files[IDs[1000:1400]],
@@ -245,6 +244,7 @@ def main():
     scheduler = StepLR(optimizer, step_size=args.step_size, gamma=args.gamma)
 
     print(f"Equivariance Group: {model.group}")
+    print(model)
 
     output = {"train_loss": [], "test_loss": [], "test_acc": [], "val_loss": []}
     for epoch in range(1, args.epochs + 1):
@@ -260,11 +260,11 @@ def main():
         output["test_acc"].append(test_acc)
         output["val_loss"].append(val_loss)
 
-    np.save(f"train_output/EN_{args.construction}_L1_{args.pt}GeV", output)
+    np.save(f"train_output/EN_{args.construction}_{args.pt}GeV", output)
     if args.save_model:
         torch.save(
             model.state_dict(),
-            f"trained_models/EN_{args.construction}_L1_epoch{args.epochs}_{args.pt}GeV.pt",
+            f"trained_models/EN_{args.construction}_epoch{args.epochs}_{args.pt}GeV.pt",
         )
 
 

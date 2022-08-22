@@ -42,7 +42,7 @@ class EB(nn.Module):
         i, j = edge_index
         update_val = x_diff * self.phi_x(m)
         # LorentzNet authors clamp the update tensor as a precautionary measure
-        update_val = torch.clamp(update_val, min=-100, max=100)
+        # update_val = torch.clamp(update_val, min=-100, max=100)
         x_agg = unsorted_segment_mean(update_val, i, num_segments=x.size(0))
         x = x + x_agg * self.c_weight
         return x
@@ -61,7 +61,7 @@ class EuclidNet(nn.Module):
         n_hidden: int,
         n_layers: int,
         n_output: int,
-        c_weight: float = 1e-3,
+        c_weight: float = 1,
         group=None
     ) -> None:
         super(EuclidNet, self).__init__()
@@ -90,7 +90,6 @@ class EuclidNet(nn.Module):
 
     def forward(self, x, edge_index):
         for i in range(self.n_layers):
-
             x = self.EBs[i](x, edge_index)
         m = torch.cat([x[edge_index[1]], x[edge_index[0]]], dim=1)
         return torch.sigmoid(self.edge_mlp(m))
