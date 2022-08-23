@@ -51,7 +51,7 @@ class EB(nn.Module):
         norms, dots, x_diff = euclidean_feats(edge_index, x)
         m = self.message(norms, dots)
         x_tilde = self.x_model(x, edge_index, x_diff, m)
-        return x_tilde
+        return x_tilde, m
 
 
 class EuclidNet(nn.Module):
@@ -81,7 +81,7 @@ class EuclidNet(nn.Module):
 
         # MLP to produce edge weights
         self.edge_mlp = nn.Sequential(
-            Linear(2 * n_input, self.n_hidden),
+            Linear(2 * n_input + self.n_hidden, self.n_hidden),
             nn.ReLU(),
             Linear(self.n_hidden, n_hidden),
             nn.ReLU(),
@@ -90,6 +90,6 @@ class EuclidNet(nn.Module):
 
     def forward(self, x, edge_index):
         for i in range(self.n_layers):
-            x = self.EBs[i](x, edge_index)
-        m = torch.cat([x[edge_index[1]], x[edge_index[0]]], dim=1)
+            x, m_ij = self.EBs[i](x, edge_index)
+        m = torch.cat([x[edge_index[1]], x[edge_index[0]], m_ij], dim=1)
         return torch.sigmoid(self.edge_mlp(m))

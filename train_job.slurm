@@ -14,5 +14,5 @@
 module load python
 source activate pytorch-gnn
 
-echo "python equivariant-tracking/train.py --pt=1.5 --construction='geometric' --epochs=150 --save-model"
-python equivariant-tracking/train.py --pt=1.5 --construction='geometric' --epochs=150 --save-model
+echo "python equivariant-tracking/train.py --pt=1.5 --construction='geometric' --save-model"
+python equivariant-tracking/train.py --pt=1.5 --construction='geometric' --save-model
