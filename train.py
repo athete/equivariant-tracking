@@ -66,7 +66,7 @@ def validate(model, device, val_loader):
 
         opt_thlds.append(opt_thld)
         accs.append(acc)
-        losses.append(loss.item())
+        losses.append(loss)
 
     print(f"...validation accuracy = {np.mean(accs)}")
     return np.mean(opt_thlds), np.mean(losses)
@@ -260,11 +260,11 @@ def main():
         output["test_acc"].append(test_acc)
         output["val_loss"].append(val_loss)
 
-    np.save(f"train_output/EN_{args.construction}_{args.pt}GeV", output)
+    np.save(f"train_output/so3/EN_{args.construction}_{args.pt}GeV", output)
     if args.save_model:
         torch.save(
             model.state_dict(),
-            f"trained_models/EN_{args.construction}_epoch{args.epochs}_{args.pt}GeV.pt",
+            f"trained_models/so3/EN_{args.construction}_epoch{args.epochs}_{args.pt}GeV.pt",
         )
 
 

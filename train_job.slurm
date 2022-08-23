@@ -9,7 +9,7 @@
 #SBATCH --time=03:30:00          # total run time limit (HH:MM:SS)
 #SBATCH --mail-type=BEGIN,END
 #SBATCH --mail-user=ameyathete11@gmail.com
-#SBATCH --output=logs/%x-geometric-1p5-so3-e150.log
+#SBATCH --output=logs/so3/%x-geometric-1p5-e150.log
 
 module load python
 source activate pytorch-gnn
