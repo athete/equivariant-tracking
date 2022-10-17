@@ -1,6 +1,6 @@
 # Input/output configuration
-input_dir: 
-output_dir: 
+input_dir: ./sample-data/
+output_dir: ./hitgraphs
 n_files: 1770
 
 # Graph building configuration

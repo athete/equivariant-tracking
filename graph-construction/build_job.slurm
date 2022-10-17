@@ -7,9 +7,8 @@
 #SBATCH --gres=gpu:1             # number of gpus per node
 #SBATCH --time=3:00:00           # total run time limit (HH:MM:SS)
 
-module purge
 module load anaconda3
-conda activate geo_gnnenv
+conda activate torch-gpu
 
 echo "...building geometric"
 python build_geometric.py configs/geometric.yaml --start-evtid=1000 --end-evtid=2000
