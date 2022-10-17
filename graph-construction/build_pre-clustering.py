@@ -48,10 +48,8 @@ def parse_args():
 
 
 # Build custom distance matrix
-@jit(nopython=True)
 def build_dist_matrix(X):
-    """ speedy custom distance matrix calculation
-    """
+    """speedy custom distance matrix calculation"""
     n_hits = X.shape[0]
     dist_matrix = 100.0 * np.ones((n_hits, n_hits))
     np.fill_diagonal(dist_matrix, 0.0)
@@ -61,7 +59,7 @@ def build_dist_matrix(X):
                 continue
             dEta = X[i][0] - X[j][0]
             dPhi = min(abs(X[i][1] - X[j][1]), 2 * np.pi - abs(X[i][1] - X[j][1])) ** 2
-            dist = np.sqrt(dEta ** 2 + dPhi ** 2)
+            dist = np.sqrt(dEta**2 + dPhi**2)
             dist_matrix[i][j] = dist
             dist_matrix[j][i] = dist
     return dist_matrix
@@ -113,7 +111,7 @@ def select_segments(
     eta_1 = calc_eta(hit_pairs.r_1, hit_pairs.z_1)
     eta_2 = calc_eta(hit_pairs.r_2, hit_pairs.z_2)
     deta = eta_2 - eta_1
-    dR = np.sqrt(deta ** 2 + dphi ** 2)
+    dR = np.sqrt(deta**2 + dphi**2)
     phi_slope = dphi / dr
     z0 = hit_pairs.z_1 - hit_pairs.r_1 * dz / dr
     same_label = hit_pairs.label_1 == hit_pairs.label_2
@@ -157,7 +155,7 @@ def construct_graph(
     remove_intersecting_edges=False,
 ):
     """
-     * Construct one graph (e.g. from one event)
+    * Construct one graph (e.g. from one event)
     """
     t0 = time.time()
     hits["eta"] = calc_eta(hits["r"], hits["z"])
@@ -338,7 +336,7 @@ def select_hits(hits, truth, particles, pt_min=0, endcaps=False):
         [vlid_groups.get_group(vlids[i]).assign(layer=i) for i in range(n_det_layers)]
     )
     # Calculate particle transverse momentum
-    pt = np.sqrt(particles.px ** 2 + particles.py ** 2)
+    pt = np.sqrt(particles.px**2 + particles.py**2)
     particles["pt"] = pt
     # True particle selection.
     # Applies pt cut, removes all noise hits.
@@ -347,7 +345,7 @@ def select_hits(hits, truth, particles, pt_min=0, endcaps=False):
         particles[["particle_id", "pt"]], on="particle_id"
     )
     # Calculate derived hits variables
-    r = np.sqrt(hits.x ** 2 + hits.y ** 2)
+    r = np.sqrt(hits.x**2 + hits.y**2)
     phi = np.arctan2(hits.y, hits.x)
     # Select the data columns we need
     hits = (

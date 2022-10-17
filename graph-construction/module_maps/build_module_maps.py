@@ -94,7 +94,7 @@ for i, evtid in enumerate(evtids):
             for i in range(len(pixel_layers))
         ]
     )
-    pt = np.sqrt(particles.px ** 2 + particles.py ** 2)
+    pt = np.sqrt(particles.px**2 + particles.py**2)
     particles["pt"] = pt
     particles = particles[pt > pt_min]
 
@@ -102,7 +102,7 @@ for i, evtid in enumerate(evtids):
         particles[["particle_id", "pt"]], on="particle_id"
     )
 
-    r = np.sqrt(hits.x ** 2 + hits.y ** 2)
+    r = np.sqrt(hits.x**2 + hits.y**2)
     phi = np.arctan2(hits.y, hits.x)
 
     hits = (

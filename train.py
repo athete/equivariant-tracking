@@ -1,50 +1,63 @@
 import os
 import argparse
-import time
-
+from time import time
+from statistics import mean
+from typing import List
+import warnings
 import numpy as np
 import torch
 import torch.nn.functional as F
-from torch import optim
+from torch.optim import Adam
 from torch.optim.lr_scheduler import StepLR
 from torch_geometric.loader import DataLoader
-
-from models.euclidean import EuclidNet
+from sklearn.metrics import roc_auc_score
+import yaml
 from models.dataset import GraphDataset
 
+warnings.filterwarnings("ignore")
 
-def train(args, model, device, train_loader, optimizer, epoch):
+
+def train(
+    args: dict,
+    model: torch.nn.Module,
+    device: str,
+    train_loader: DataLoader,
+    optimizer: torch.optim.Optimizer,
+    epoch: int,
+) -> None:
     model.train()
-    epoch_t0 = time.time()
+    epoch_t0 = time()
     losses = []
     for batch_idx, data in enumerate(train_loader):
         data = data.to(device)
         optimizer.zero_grad()
-        out = model(data.x, data.edge_index, data.edge_attr)
+        out = model(data.x, data.edge_index)
         y, out = data.y, out.squeeze(1)
         loss = F.binary_cross_entropy(out, y, reduction="mean")
         loss.backward()
         optimizer.step()
-        if batch_idx % args.log_interval == 0:
+        if batch_idx % 10 == 0:
             print(
                 f"Train Epoch: {epoch} [{batch_idx}/{len(train_loader.dataset)} ({100. * batch_idx / len(train_loader):.6f})]\tLoss: {loss.item():.6f}"
             )
-        if args.dry_run:
-            break
+        if args.dry_run == True:
+            quit()
         losses.append(loss.item())
-    print(f"...epoch time: {time.time() - epoch_t0}s")
-    print(f"...epoch {epoch}: train loss = {np.mean(losses)}")
-    return np.mean(losses)
+    print(f"...epoch time: {time() - epoch_t0}s")
+    print(f"...epoch {epoch}: train loss = {mean(losses)}")
+    return mean(losses)
 
 
-def validate(model, device, val_loader):
+def validate(
+    model: torch.nn.Module, device: str, val_loader: DataLoader
+) -> List[np.array]:
     model.eval()
-    opt_thlds, losses, accs = [], [], []
+    opt_thlds, losses, accs, aucs = [], [], [], []
     for data in val_loader:
         data = data.to(device)
-        out = model(data.x, data.edge_index, data.edge_attr)
+        out = model(data.x, data.edge_index)
         y, out = data.y, out.squeeze(1)
-        loss = F.binary_cross_entropy(out, y, reduction="mean")
+        loss = F.binary_cross_entropy(out, y, reduction="mean").item()
 
         # define optimal threshold where TPR = TNR
         diff, opt_thld, opt_acc = 100, 0, 0
@@ -60,21 +73,26 @@ def validate(model, device, val_loader):
             if delta < diff:
                 diff, opt_thld, opt_acc = delta, thld, acc
 
+        auc = roc_auc_score(y.cpu(), (out > opt_thld).float().cpu())
+        aucs.append(auc)
         opt_thlds.append(opt_thld)
         accs.append(acc)
-        losses.append(loss.item())
+        losses.append(loss)
 
     print(f"...validation accuracy = {np.mean(accs)}")
-    return np.mean(opt_thlds), np.mean(losses)
+    print(f"...validation ROC AUC = {np.mean(aucs)}")
+    return np.mean(opt_thlds), np.mean(losses), np.mean(aucs)
 
 
-def test(model, device, test_loader, thld=0.5):
+def test(
+    model: torch.nn.Module, device: str, test_loader: DataLoader, thld: float = 0.5
+) -> List[np.array]:
     model.eval()
-    losses, accs = [], []
+    losses, accs, aucs, purity, effs = [], [], [], [], []
     with torch.no_grad():
         for data in test_loader:
             data = data.to(device)
-            out = model(data.x, data.edge_index, data.edge_attr)
+            out = model(data.x, data.edge_index)
             TP = torch.sum((data.y == 1).squeeze() & (out > thld).squeeze()).item()
             TN = torch.sum((data.y == 0).squeeze() & (out < thld).squeeze()).item()
             FP = torch.sum((data.y == 0).squeeze() & (out > thld).squeeze()).item()
@@ -83,57 +101,25 @@ def test(model, device, test_loader, thld=0.5):
             loss = F.binary_cross_entropy(
                 out.squeeze(1), data.y, reduction="mean"
             ).item()
+            auc = roc_auc_score(data.y.cpu(), (out > thld).float().cpu())
+            aucs.append(auc)
             accs.append(acc)
             losses.append(loss)
-    print(f"...test loss = {np.mean(losses)}\n...test accuracy = {np.mean(accs)}")
-    return np.mean(losses), np.mean(accs)
+            purity.append((TP / (TP + FN)))
+            effs.append((TP / (TP + FP)))
+    print(
+        f"...test loss = {np.mean(losses)}\n...test accuracy = {np.mean(accs)}\n...test ROC AUC = {np.mean(aucs)}"
+    )
+    print(f"...test purity = {np.mean(purity)}\n...test efficiency = {np.mean(effs)}")
+    return np.mean(losses), np.mean(accs), np.mean(aucs), np.mean(purity), np.mean(effs)
 
 
 def main():
-    # Training argument
+    print("In main")
+
+    # Training arguments
     parser = argparse.ArgumentParser(
-        description="Euclidean Equivariant Network Implementation"
-    )
-    parser.add_argument(
-        "--batch-size",
-        type=int,
-        default=64,
-        metavar="N",
-        help="input batch size for training (default: 64)",
-    )
-    parser.add_argument(
-        "--test-batch-size",
-        type=int,
-        default=1000,
-        metavar="N",
-        help="input batch size for testing (default: 1000)",
-    )
-    parser.add_argument(
-        "--epochs",
-        type=int,
-        default=14,
-        metavar="N",
-        help="number of epochs to train (default: 14)",
-    )
-    parser.add_argument(
-        "--lr",
-        type=float,
-        default=1.0,
-        metavar="LR",
-        help="learning rate (default: 1.0)",
-    )
-    parser.add_argument(
-        "--gamma",
-        type=float,
-        default=0.7,
-        metavar="M",
-        help="Learning rate step gamma (default: 0.7)",
-    )
-    parser.add_argument(
-        "--step-size", type=int, default=5, help="Learning rate step size"
-    )
-    parser.add_argument(
-        "--pt", type=str, default="2", help="Cutoff pt value in GeV (default: 2)"
+        description="Euclidean Equivariant Network"
     )
     parser.add_argument(
         "--no-cuda", action="store_true", default=False, help="disables CUDA training"
@@ -148,71 +134,51 @@ def main():
         "--seed", type=int, default=42, metavar="S", help="random seed (default: 42)"
     )
     parser.add_argument(
-        "--log-interval",
-        type=int,
-        default=10,
-        metavar="N",
-        help="how many batches to wait before logging training status (default: 10)",
-    )
-    parser.add_argument(
-        "--construction",
+        "--group",
         type=str,
-        default="geometric",
-        help="graph construction method",
+        default="SO2",
+        metavar="G",
+        help="equivariance group (default: SO(2))",
     )
     parser.add_argument(
         "--save-model",
         action="store_true",
         default=False,
-        help="For saving the current Model",
-    )
-    parser.add_argument(
-        "--hidden-size", type=int, default=40, help="Number of hidden units per layer"
-    )
-    parser.add_argument(
-        "--num-layers",
-        type=int,
-        default=5,
-        help="Number of repetitions of the equivariant block (default: 5)",
-    )
-    parser.add_argument(
-        "--c-weight",
-        type=float,
-        default=1e-3,
-        help="Weight hyperparameter for updates (default: 1e-3)",
+        help="For saving the current model",
     )
 
     args = parser.parse_args()
     use_cuda = not args.no_cuda and torch.cuda.is_available()
     print(f"use_cuda={use_cuda}")
 
-    torch.manual_seed(args.seed)
+    # open config file
+    with open("./models/config.yaml", "r") as config_file:
+        hparams = yaml.safe_load(config_file)
 
     device = torch.device("cuda" if use_cuda else "cpu")
-
-    train_kwargs = {"batch_size": args.batch_size}
-    test_kwargs = {"batch_size": args.test_batch_size}
+    print(f"Using {device}")
+    train_kwargs = {"batch_size": hparams["batch_size"]}
+    test_kwargs = {"batch_size": hparams["test_batch_size"]}
     if use_cuda:
         cuda_kwargs = {"num_workers": 1, "pin_memory": True, "shuffle": True}
         train_kwargs.update(cuda_kwargs)
         test_kwargs.update(cuda_kwargs)
 
-    home_dir = ""
-    indir = f"hitgraphs/{args.construction}/{args.pt.replace('.', 'p')}/"
- 
+    indir = os.path.join(hparams["input_dir"], hparams["hitgraph"], hparams["pt"])
+    print(indir)
+
     graph_files = np.array(os.listdir(indir))
     graph_files = np.array(
         [os.path.join(indir, graph_file) for graph_file in graph_files]
     )
-    graph_paths = [os.path.join(indir, filename) for filename in graph_files]
     n_graphs = len(graph_files)
 
     IDs = np.arange(n_graphs)
     np.random.shuffle(IDs)
     partition = {
         "train": graph_files[IDs[:1000]],
-        "test": graph_files[IDs[1000:1400]],
-        "val": graph_files[IDs[1400:1500]],
+        "test": graph_files[IDs[1400:1500]],
+        "val": graph_files[IDs[1000:1500]],
     }
     params = {"batch_size": 1, "shuffle": True, "num_workers": 6}
 
@@ -226,38 +192,60 @@ def main():
     val_loader = DataLoader(val_set, **params)
     print("...Successfully loaded val graphs")
 
-    model = EuclidNet(
-        n_input=train_set.get(0).x.size()[1],
-        n_hidden=args.hidden_size,
-        n_layers=args.num_layers,
-        n_output=1,
-        c_weight=args.c_weight,
-    )
+    if args.group == "SO2":
+        from models.euclidean_so2 import EuclidNet
+    elif args.group == "SO3":
+        from models.euclidean_so3 import EuclidNet
+    else:
+        raise NotImplementedError(f"Symmetry group {args.group} is not supported")
+
+    model = EuclidNet(hparams).to(device)
     total_trainable_params = sum(p.numel() for p in model.parameters())
     print(f"Total trainable parameters: {total_trainable_params}")
-    model.to(device)
+    optimizer = Adam(model.parameters(), lr=hparams["lr"])
+    scheduler = StepLR(
+        optimizer, step_size=hparams["step_size"], gamma=hparams["gamma"]
+    )
 
-    optimizer = optim.Adam(model.parameters(), lr=args.lr)
-    scheduler = StepLR(optimizer, step_size=args.step_size, gamma=args.gamma)
-
-    output = {"train_loss": [], "test_loss": [], "test_acc": [], "val_loss": []}
-    for epoch in range(1, args.epochs + 1):
+    output = {
+        "train_loss": [],
+        "test_loss": [],
+        "test_acc": [],
+        "test_auc": [],
+        "val_loss": [],
+        "val_auc": [],
+        "purity": [],
+        "effs": [],
+    }
+    for epoch in range(1, hparams["epochs"] + 1):
         print(f"---- Epoch {epoch} ----")
         train_loss = train(args, model, device, train_loader, optimizer, epoch)
-        thld, val_loss = validate(model, device, val_loader)
+        thld, val_loss, val_auc = validate(model, device, val_loader)
         print(f"...optimal threshold: {thld}")
-        test_loss, test_acc = test(model, device, test_loader, thld=thld)
+        test_loss, test_acc, test_auc, purity, effs = test(
+            model, device, test_loader, thld=thld
+        )
         scheduler.step()
-
-        if args.save_model:
-            torch.save(
-                model.state_dict(),
-                f"trained_models/EN_{args.construction}_epoch{epoch}_{args.pt}GeV.pt",
-            )
 
         output["train_loss"].append(train_loss)
         output["test_loss"].append(test_loss)
         output["test_acc"].append(test_acc)
+        output["test_auc"].append(test_auc)
         output["val_loss"].append(val_loss)
+        output["val_auc"].append(val_auc)
+        output["purity"].append(purity)
+        output["effs"].append(effs)
 
-    np.save(f"train_output/EN_{args.construction}_{args.pt}GeV", output)
+    np.save(
+        f"train_output/so2/EN_{hparams['pt']}GeV_L{hparams['n_layers']}_hidden{hparams['n_hidden']}",
+        output,
+    )
+    if args.save_model:
+        torch.save(
+            model.state_dict(),
+            f"trained_models/so2/EN_{hparams['hitgraph']}_epoch{hparams['epochs']}_L{hparams['n_layers']}_h{hparams['n_hidden']}_{hparams['pt']}GeV.pt",
+        )
+
+
+if __name__ == "__main__":
+    main()
