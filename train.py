@@ -174,7 +174,6 @@ def main():
     n_graphs = len(graph_files)
 
     IDs = np.arange(n_graphs)
-    np.random.shuffle(IDs)
     partition = {
         "train": graph_files[IDs[:1000]],
         "test": graph_files[IDs[1400:1500]],

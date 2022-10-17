@@ -33,7 +33,7 @@ def parse_args():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser("prepare.py")
     add_arg = parser.add_argument
-    add_arg("config", nargs="?", default="configs/prepare_trackml.yaml")
+    add_arg("config", nargs="?", default="configs/geometric.yaml")
     add_arg("--n-workers", type=int, default=1)
     add_arg("--task", type=int, default=0)
     add_arg("--n-tasks", type=int, default=1)

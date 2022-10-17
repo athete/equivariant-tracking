@@ -3,6 +3,7 @@ import numpy as np
 from torch_geometric.data import Data, Dataset
 
 
+
 class GraphDataset(Dataset):
     def __init__(self, transform=None, pre_transform=None, graph_files=[]):
         super(GraphDataset, self).__init__(None, transform, pre_transform)
