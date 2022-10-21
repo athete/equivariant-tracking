@@ -7,7 +7,7 @@
 This repository contains the code written for the IRIS-HEP Fellowship project: **[Equivariant Graph Neural Networks for Particle Tracking](https://iris-hep.org/fellows/ameya1101.html)**.
 
 **IRIS-HEP Fellowship Presentation:** 
-[Equivariant Graph Neural Networks for Charged Particle Tracking](https://indico.cern.ch/event/1199559/), Ameya Thete, 19 October 2022. ([Recording]())
+[Equivariant Graph Neural Networks for Charged Particle Tracking](https://indico.cern.ch/event/1199559/), Ameya Thete, 19 October 2022. ([Recording](https://www.youtube.com/watch?v=gEaqn7C9ipY&t=6271s))
 
 **Poster:** 
 [Equivariant Graph Neural Networks for Charged Particle Tracking](https://indi.to/Gh2Fs), 21st International Workshop on Advanced Computing Analysis Techniques in Physics Research (ACAT), Bari, Italy. 26 October 2022.
